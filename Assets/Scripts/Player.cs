@@ -10,6 +10,7 @@ public class Player : MonoBehaviour
     public float jumpHeight = 15f;
     public float groundRayDistance = 1.1f;
     private bool isJumping = false;
+    private float currentJumpHeight;
 
 
     private CharacterController controller; // Reference to character controller
@@ -41,7 +42,7 @@ public class Player : MonoBehaviour
             // normaloize it to 1f!
             inputDir.Normalize();
         }
-        
+
 
         if (inputRun)
         {
@@ -51,40 +52,34 @@ public class Player : MonoBehaviour
         {
             Walk(inputDir.x, inputDir.z);
         }
-        // If player is on the ground and pressed "Jump"
-        if (IsGrounded() && inputJump)
-        {
-            // Make player jump
-            Jump();
-        }
-        // if is not grounded and isJumping
-        if (!IsGrounded() && isJumping)
-        {
-            // Set isJumping to false
-            isJumping = false;
-        }
 
+        // If is grounded
+        if (controller.isGrounded)
+        {
+            // .. And jump?
+            if (inputJump)
+            {
+                Jump(jumpHeight);
+            }
+
+            // Cancel the Y velocity
+            motion.y = 0f;
+
+            // IsGrounded jumping bool set to true
+            if (isJumping)
+            {
+                // Set jump height
+                motion.y = currentJumpHeight;
+                // Reset back to false
+                isJumping = false;
+            }
+
+        }
 
         motion.y += gravity * Time.deltaTime;
-
         controller.Move(motion * Time.deltaTime);
     }
 
-    bool IsGrounded()
-    {
-        // Raycast below the player
-        Ray groundRay = new Ray(transform.position, -transform.up);
-        RaycastHit hit;
-        // If hitting something
-        if (Physics.Raycast(groundRay, out hit, groundRayDistance))
-        {
-            return true;
-        }
-        return false;
-        //          Return True
-        // Else
-        //          Return False
-    }
 
     void Move(float inputH, float inputV, float speed)
     {
@@ -93,7 +88,6 @@ public class Player : MonoBehaviour
         // Convert local direction to world space direction (relative to player's position)
         //direction = transform.TransformDirection(direction);
 
-        // If shift is pressed
         motion.x = direction.x * speed;
         motion.z = direction.z * speed;
 
@@ -107,10 +101,12 @@ public class Player : MonoBehaviour
     {
         Move(inputH, inputV, runSpeed);
     }
-
-    public void Jump()
+    public void Jump(float height)
     {
-        motion.y = jumpHeight;
+
         isJumping = true; // We are jumping
+        currentJumpHeight = height;
     }
+ 
 }
+
